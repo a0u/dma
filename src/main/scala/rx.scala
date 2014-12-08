@@ -93,15 +93,18 @@ class RxFrontEnd extends Module {
 
   io.op.ready := Bool(true)
 
-  val idx = Reg(init = UInt(0, params(DMAOffsetBits)))
   val buf = Vec.fill(params(DMAOffsetRange)){
     Reg(Bits(width = params(DMAStreamBits)))}
 
+  private val IP_ALIGN = 2
   private val w = log2Up(params(DMAStreamBits)) - 3
+  val index = Reg(init = UInt(IP_ALIGN, params(DMAOffsetBits)))
   val count = Reg(init = UInt(0, params(DMACountBits) - w))
   val last = Reg(Bool())
 
-  val next = (idx === UInt(buf.length-1)) || io.in.bits.last
+  val full = (index === UInt(buf.length-1))
+  val incr = if (isPow2(buf.length)) Bool(true) else !full
+  val next = full || io.in.bits.last
 
   io.in.ready := Bool(false)
   io.out.valid := Bool(false)
@@ -118,8 +121,9 @@ class RxFrontEnd extends Module {
       io.in.ready := Bool(true)
       last := io.in.bits.last
       when (io.in.valid) {
-        buf(idx) := io.in.bits.data
-        idx := (idx + UInt(1)) & Fill(!next, params(DMAOffsetBits))
+        buf(index) := io.in.bits.data
+        index := Mux(io.in.bits.last, UInt(IP_ALIGN),
+          (index + UInt(1)) & Fill(incr, params(DMAOffsetBits)))
         count := count + UInt(1)
         when (next) {
           state := s_push

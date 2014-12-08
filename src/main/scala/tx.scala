@@ -156,17 +156,17 @@ class TxBackEnd extends Module {
   }
 
   val count = Reg(UInt(width = params(DMACountBits)))
-  val offset = Reg(UInt(width = params(DMAOffsetBits)))
+  val index = Reg(UInt(width = params(DMAOffsetBits)))
   val dequeue = io.out.bits.last ||
-    (offset === UInt(params(DMAOffsetRange)-1))
+    (index === UInt(params(DMAOffsetRange)-1))
 
   private val wd = params(TLDataBits)
   private val ws = params(DMAStreamBits)
   require(wd % ws == 0)
 
-  val blocks = Vec((0 until wd by ws).map(
+  val buf = Vec((0 until wd by ws).map(
     i => io.in.bits(i + ws - 1, i)))
-  io.out.bits.data := blocks(offset)
+  io.out.bits.data := buf(index)
   io.out.bits.last := (count === UInt(1))
 
   io.op.ready := Bool(false)
@@ -182,7 +182,7 @@ class TxBackEnd extends Module {
       when (io.op.valid) {
         state := s_busy
         count := io.op.bits.cnt
-        offset := io.op.bits.addr(log2Up(wd)-4, log2Up(ws)-3)
+        index := io.op.bits.addr(log2Up(wd)-4, log2Up(ws)-3)
       }
     }
 
@@ -191,10 +191,10 @@ class TxBackEnd extends Module {
       io.out.valid := io.in.valid
 
       when (io.out.fire()) {
-        offset := offset + UInt(1)
+        index := index + UInt(1)
         if (isPow2(params(DMAOffsetRange))) {
           when (dequeue) {
-            offset := UInt(0)
+            index := UInt(0)
           }
         }
         count := count - UInt(1)
