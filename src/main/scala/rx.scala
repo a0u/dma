@@ -167,7 +167,7 @@ class RxBackEnd extends Module {
   io.mem.acquire.bits.header.dst := UInt(0) // FIXME (?)
   io.mem.grant.ready := Bool(false)
   io.mem.finish.valid := Bool(false)
-  io.mem.finish.bits.payload.master_xact_id := mem_gxid 
+  io.mem.finish.bits.payload.manager_xact_id := mem_gxid
   io.mem.finish.bits.header.dst := mem_gsrc
 
   val co = params(TLCoherence)
@@ -198,7 +198,7 @@ class RxBackEnd extends Module {
     is (s_res) {
       io.mem.grant.ready := Bool(true)
       when (io.mem.grant.valid) {
-        mem_gxid := io.mem.grant.bits.payload.master_xact_id
+        mem_gxid := io.mem.grant.bits.payload.manager_xact_id
         mem_gsrc := io.mem.grant.bits.header.src
         state := MuxCase(s_req, Array(
           mem_ack -> s_ack,

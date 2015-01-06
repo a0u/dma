@@ -95,7 +95,7 @@ class TxFrontEnd extends Module {
   io.mem.acquire.bits.header.dst := UInt(0) // FIXME (?)
   io.mem.grant.ready := Bool(false)
   io.mem.finish.valid := Bool(false)
-  io.mem.finish.bits.payload.master_xact_id := mem_gxid 
+  io.mem.finish.bits.payload.manager_xact_id := mem_gxid
   io.mem.finish.bits.header.dst := mem_gsrc
 
   val co = params(TLCoherence)
@@ -131,7 +131,7 @@ class TxFrontEnd extends Module {
       io.out.valid := io.mem.grant.valid
       io.mem.grant.ready := io.out.ready
       when (io.out.fire()) {
-        mem_gxid := io.mem.grant.bits.payload.master_xact_id
+        mem_gxid := io.mem.grant.bits.payload.manager_xact_id
         mem_gsrc := io.mem.grant.bits.header.src
         state := MuxCase(s_req, Array(
           mem_ack -> s_ack,

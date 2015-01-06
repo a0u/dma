@@ -24,9 +24,7 @@ class DMAEngine extends Module {
 
   arb.io.in(0) <> tx.io.mem
   arb.io.in(1) <> rx.io.mem
-  io.mem <> arb.io.out
-  io.mem.probe.ready := Bool(false)
-  io.mem.release.valid := Bool(false)
+  io.mem <> TileLinkIOWrapper(arb.io.out)
 
   io.cmd.irq := tx.io.irq || rx.io.irq
 }
